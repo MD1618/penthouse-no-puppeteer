@@ -1,4 +1,3 @@
-import puppeteer from 'puppeteer'
 import debug from 'debug'
 
 const debuglog = debug('penthouse:browser')
@@ -10,46 +9,29 @@ const reusableBrowserPages = []
 // keep track of when we can close the browser penthouse uses;
 // kept open by continuous use
 let ongoingJobs = 0
-export function addJob () {
+export function addJob() {
   ongoingJobs = ongoingJobs + 1
 }
-export function removeJob () {
+export function removeJob() {
   ongoingJobs = ongoingJobs - 1
 }
 
-const DEFAULT_PUPPETEER_LAUNCH_ARGS = [
-  '--disable-setuid-sandbox',
-  '--no-sandbox',
-  '--ignore-certificate-errors'
-  // better for Docker:
-  // https://github.com/GoogleChrome/puppeteer/blob/master/docs/troubleshooting.md#tips
-  // (however caused memory leaks in Penthouse when testing in Ubuntu, hence disabled)
-  // '--disable-dev-shm-usage'
-]
+export async function launchBrowserIfNeeded({ getBrowser, width, height }) {
+  if (!getBrowser || typeof getBrowser !== 'function') {
+    throw new Error('A getBrowser function must be provided to obtain a browser instance (e.g., from Cloudflare Puppeteer).')
+  }
 
-export async function launchBrowserIfNeeded ({ getBrowser, width, height }) {
-  const usingCustomGetBrowser = getBrowser && typeof getBrowser === 'function'
-  if (usingCustomGetBrowser && !_browserLaunchPromise) {
+  if (browser) {
+    // we already have a running browser
+    debuglog('browser already running, reusing existing instance')
+    return
+  }
+
+  if (!_browserLaunchPromise) {
     debuglog('using browser provided via getBrowser option')
     _browserLaunchPromise = Promise.resolve(getBrowser())
   }
-  if (!_browserLaunchPromise) {
-    if (browser) {
-      // we have already a running browser
-      return
-    }
 
-    debuglog('no browser instance, launching new browser..')
-
-    _browserLaunchPromise = puppeteer.launch({
-      args: DEFAULT_PUPPETEER_LAUNCH_ARGS,
-      ignoreHTTPSErrors: true,
-      defaultViewport: {
-        width,
-        height
-      }
-    })
-  }
   _browserLaunchPromise.then(async browser => {
     debuglog('browser ready')
     const browserPages = await browser.pages()
@@ -71,28 +53,33 @@ export async function launchBrowserIfNeeded ({ getBrowser, width, height }) {
   _browserLaunchPromise = null
 }
 
-export async function closeBrowser ({ forceClose, unstableKeepBrowserAlive }) {
-  if (browser && (forceClose || !unstableKeepBrowserAlive)) {
+export async function closeBrowser({ forceClose, unstableKeepBrowserAlive, keepBrowserOpen }) {
+  if (browser && (forceClose || (!unstableKeepBrowserAlive && !keepBrowserOpen))) {
     if (ongoingJobs > 0) {
       debuglog('keeping browser open as ongoingJobs: ' + ongoingJobs)
     } else if (browser && browser.close) {
-      browser.close()
-      browser = null
-      _browserLaunchPromise = null
-      debuglog('closed browser')
+      // Only close browser if not externally managed
+      if (!keepBrowserOpen) {
+        browser.close()
+        debuglog('closed browser')
+        browser = null
+        _browserLaunchPromise = null
+      } else {
+        debuglog('browser kept open (externally managed)')
+      }
     }
   }
 }
 
-export async function restartBrowser ({ getBrowser, width, height }) {
+export async function restartBrowser({ getBrowser, width, height }) {
   let browserPages
   if (browser) {
     browserPages = await browser.pages()
   }
   debuglog(
     'restartBrowser called' + browser &&
-      browserPages &&
-      '\n_browserPagesOpen: ' + browserPages.length
+    browserPages &&
+    '\n_browserPagesOpen: ' + browserPages.length
   )
   // for some reason Chromium is no longer opened;
   // perhaps it crashed
@@ -101,14 +88,16 @@ export async function restartBrowser ({ getBrowser, width, height }) {
     await _browserLaunchPromise
     // if getBrowser is specified the user is managing the puppeteer browser themselves,
     // so we do nothing.
-  } else if (!getBrowser) {
-    console.log('now restarting chrome after crash')
+  } else if (getBrowser) {
+    console.log('now restarting browser after crash')
     browser = null
-    await launchBrowserIfNeeded({ width, height })
+    await launchBrowserIfNeeded({ getBrowser, width, height })
+  } else {
+    throw new Error('getBrowser function is required for browser restart')
   }
 }
 
-export async function browserIsRunning () {
+export async function browserIsRunning() {
   try {
     // will throw 'Not opened' error if browser is not running
     await browser.version()
@@ -118,14 +107,14 @@ export async function browserIsRunning () {
   }
 }
 
-export async function getOpenBrowserPage () {
+export async function getOpenBrowserPage() {
   const browserPages = await browser.pages()
 
   // if any re-usable pages to use, avoid unnecessary page open/close calls
   if (reusableBrowserPages.length > 0) {
     debuglog(
       're-using browser page for generateCriticalCss, remaining at: ' +
-        browserPages.length
+      browserPages.length
     )
     const reusedPage = reusableBrowserPages.pop()
     let reused = true
@@ -144,14 +133,14 @@ export async function getOpenBrowserPage () {
 
   debuglog(
     'adding browser page for generateCriticalCss, before adding was: ' +
-      browserPages.length
+    browserPages.length
   )
   return browser.newPage().then(page => {
     return { page }
   })
 }
 
-export async function closeBrowserPage ({
+export async function closeBrowserPage({
   page,
   error,
   unstableKeepBrowserAlive,
@@ -163,7 +152,7 @@ export async function closeBrowserPage ({
   const browserPages = await browser.pages()
   debuglog(
     'remove (maybe) browser page for generateCriticalCss, before removing was: ' +
-      browserPages.length
+    browserPages.length
   )
 
   const badErrors = ['Target closed', 'Page crashed']

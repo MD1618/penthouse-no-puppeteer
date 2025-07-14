@@ -1,6 +1,6 @@
 # penthouse
 
-> Critical Path CSS Generator
+> Critical Path CSS Generator (No Internal Puppeteer)
 
 [![NPM version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
@@ -10,7 +10,7 @@
 
 Penthouse is the original critical path css generator, helping you out to speed up page rendering for your websites. Supply your site's full CSS and the page you want to create the critical CSS for, and Penthouse will return the critical CSS needed to perfectly render the above the fold content of the page. Read more about critical path css [here](http://www.phpied.com/css-and-the-critical-path/).
 
-The process is automatic and the generated CSS is production ready as is. Behind the scenes Penthouse is using [puppeteer](https://github.com/GoogleChrome/puppeteer) to generate the critical css via the chromium:headless.
+**This fork has been modified to require an external browser instance** (such as from Cloudflare Puppeteer) rather than launching its own. This makes it suitable for use in environments where you cannot launch browsers directly, such as Cloudflare Workers.
 
 ## Usage
 
@@ -58,7 +58,7 @@ Only `url` and `cssString` are required - all other options are optional. Note t
 | forceExclude | `array` | `[]` | Array of css selectors to remove in critical css, even if appearing in critical viewport. Strings or regex (f.e. `['.doNotKeepMeEvenIfNotSeenInDom', /^\.button/]`) |
 | propertiesToRemove | `array` | `['(.*)transition(.*)', 'cursor', 'pointer-events', '(-webkit-)?tap-highlight-color', '(.*)user-select']` ] | Css properties to filter out from critical css |
 | timeout       | `integer` | `30000` | Ms; abort critical CSS generation after this time |
-| puppeteer     | `object`  | | Settings for puppeteer. See [Custom puppeteer browser example](https://github.com/pocketjoso/penthouse/tree/master/examples/custom-browser.js) |
+| puppeteer     | `object`  | | **REQUIRED**: Object containing `getBrowser` function that returns a browser instance. Additional optional properties: `keepBrowserOpen` (boolean), `pageGotoOptions` (object). |
 | pageLoadSkipTimeout | `integer` | `0` | Ms; stop waiting for page load after this time (for sites when page load event is unreliable) |
 | renderWaitTime | `integer` | `100` | ms; wait time after page load before critical css extraction starts (also before "before" screenshot is taken, if used) |
 | blockJSRequests | `boolean` | `true` | set to false to load JS (not recommended)
