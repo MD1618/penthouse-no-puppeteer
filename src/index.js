@@ -31,12 +31,12 @@ const DEFAULT_PROPERTIES_TO_REMOVE = [
 ]
 const _UNSTABLE_KEEP_ALIVE_MAX_KEPT_OPEN_PAGES = 4
 
-function exitHandler(exitCode) {
+function exitHandler (exitCode) {
   closeBrowser({ forceClose: true })
   process.exit(typeof exitCode === 'number' ? exitCode : 0)
 }
 
-function readFilePromise(filepath, encoding) {
+function readFilePromise (filepath, encoding) {
   return new Promise((resolve, reject) => {
     fs.readFile(filepath, encoding, (err, content) => {
       if (err) {
@@ -47,7 +47,7 @@ function readFilePromise(filepath, encoding) {
   })
 }
 
-function prepareForceSelectorsForSerialization(forceSelectors = []) {
+function prepareForceSelectorsForSerialization (forceSelectors = []) {
   // need to annotate forceInclude values to allow RegExp to pass through JSON serialization
   return forceSelectors.map(function (forceSelectorValue) {
     if (
@@ -65,7 +65,7 @@ function prepareForceSelectorsForSerialization(forceSelectors = []) {
 }
 
 // const so not hoisted, so can get regeneratorRuntime inlined above, needed for Node 4
-const generateCriticalCssWrapped = async function generateCriticalCssWrapped(
+const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
   options,
   { forceTryRestartBrowser } = {}
 ) {
@@ -143,10 +143,10 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped(
     if (!forceTryRestartBrowser && !runningBrowswer) {
       debuglog(
         'Browser unexpecedly not opened - crashed? ' +
-        '\nurl: ' +
-        options.url +
-        '\ncss length: ' +
-        options.cssString.length
+          '\nurl: ' +
+          options.url +
+          '\ncss length: ' +
+          options.cssString.length
       )
       await restartBrowser({
         width,
@@ -184,8 +184,13 @@ module.exports = async function (options, callback) {
   process.on('SIGINT', exitHandler)
 
   // Validate that a getBrowser function is provided
-  if (!options.puppeteer || typeof options.puppeteer.getBrowser !== 'function') {
-    const error = new Error('A puppeteer.getBrowser function must be provided to obtain a browser instance (e.g., from Cloudflare Puppeteer).')
+  if (
+    !options.puppeteer ||
+    typeof options.puppeteer.getBrowser !== 'function'
+  ) {
+    const error = new Error(
+      'A puppeteer.getBrowser function must be provided to obtain a browser instance (e.g., from Cloudflare Puppeteer).'
+    )
     if (callback) {
       callback(error, null)
       return
@@ -194,7 +199,7 @@ module.exports = async function (options, callback) {
   }
 
   addJob()
-  function cleanupAndExit({ returnValue, error = null }) {
+  function cleanupAndExit ({ returnValue, error = null }) {
     process.removeListener('exit', exitHandler)
     process.removeListener('SIGTERM', exitHandler)
     process.removeListener('SIGINT', exitHandler)

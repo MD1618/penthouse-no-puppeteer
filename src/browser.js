@@ -9,16 +9,18 @@ const reusableBrowserPages = []
 // keep track of when we can close the browser penthouse uses;
 // kept open by continuous use
 let ongoingJobs = 0
-export function addJob() {
+export function addJob () {
   ongoingJobs = ongoingJobs + 1
 }
-export function removeJob() {
+export function removeJob () {
   ongoingJobs = ongoingJobs - 1
 }
 
-export async function launchBrowserIfNeeded({ getBrowser, width, height }) {
+export async function launchBrowserIfNeeded ({ getBrowser, width, height }) {
   if (!getBrowser || typeof getBrowser !== 'function') {
-    throw new Error('A getBrowser function must be provided to obtain a browser instance (e.g., from Cloudflare Puppeteer).')
+    throw new Error(
+      'A getBrowser function must be provided to obtain a browser instance (e.g., from Cloudflare Puppeteer).'
+    )
   }
 
   if (browser) {
@@ -53,8 +55,15 @@ export async function launchBrowserIfNeeded({ getBrowser, width, height }) {
   _browserLaunchPromise = null
 }
 
-export async function closeBrowser({ forceClose, unstableKeepBrowserAlive, keepBrowserOpen }) {
-  if (browser && (forceClose || (!unstableKeepBrowserAlive && !keepBrowserOpen))) {
+export async function closeBrowser ({
+  forceClose,
+  unstableKeepBrowserAlive,
+  keepBrowserOpen
+}) {
+  if (
+    browser &&
+    (forceClose || (!unstableKeepBrowserAlive && !keepBrowserOpen))
+  ) {
     if (ongoingJobs > 0) {
       debuglog('keeping browser open as ongoingJobs: ' + ongoingJobs)
     } else if (browser && browser.close) {
@@ -71,15 +80,15 @@ export async function closeBrowser({ forceClose, unstableKeepBrowserAlive, keepB
   }
 }
 
-export async function restartBrowser({ getBrowser, width, height }) {
+export async function restartBrowser ({ getBrowser, width, height }) {
   let browserPages
   if (browser) {
     browserPages = await browser.pages()
   }
   debuglog(
     'restartBrowser called' + browser &&
-    browserPages &&
-    '\n_browserPagesOpen: ' + browserPages.length
+      browserPages &&
+      '\n_browserPagesOpen: ' + browserPages.length
   )
   // for some reason Chromium is no longer opened;
   // perhaps it crashed
@@ -97,7 +106,7 @@ export async function restartBrowser({ getBrowser, width, height }) {
   }
 }
 
-export async function browserIsRunning() {
+export async function browserIsRunning () {
   try {
     // will throw 'Not opened' error if browser is not running
     await browser.version()
@@ -107,14 +116,14 @@ export async function browserIsRunning() {
   }
 }
 
-export async function getOpenBrowserPage() {
+export async function getOpenBrowserPage () {
   const browserPages = await browser.pages()
 
   // if any re-usable pages to use, avoid unnecessary page open/close calls
   if (reusableBrowserPages.length > 0) {
     debuglog(
       're-using browser page for generateCriticalCss, remaining at: ' +
-      browserPages.length
+        browserPages.length
     )
     const reusedPage = reusableBrowserPages.pop()
     let reused = true
@@ -133,14 +142,14 @@ export async function getOpenBrowserPage() {
 
   debuglog(
     'adding browser page for generateCriticalCss, before adding was: ' +
-    browserPages.length
+      browserPages.length
   )
   return browser.newPage().then(page => {
     return { page }
   })
 }
 
-export async function closeBrowserPage({
+export async function closeBrowserPage ({
   page,
   error,
   unstableKeepBrowserAlive,
@@ -152,7 +161,7 @@ export async function closeBrowserPage({
   const browserPages = await browser.pages()
   debuglog(
     'remove (maybe) browser page for generateCriticalCss, before removing was: ' +
-    browserPages.length
+      browserPages.length
   )
 
   const badErrors = ['Target closed', 'Page crashed']
