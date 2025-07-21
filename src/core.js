@@ -199,7 +199,7 @@ async function preparePage ({
     }
   }
 
-  // disable Puppeteer navigation timeouts;
+  // Move these UP HERE (always run) - disable Puppeteer navigation timeouts;
   // Penthouse tracks these internally instead.
   page.setDefaultNavigationTimeout(0)
 
@@ -240,7 +240,8 @@ async function preparePage ({
       setViewportPromise,
       setUserAgentPromise,
       setCustomPageHeadersPromise,
-      setCookiesPromise
+      setCookiesPromise,
+      blockJSRequestsPromise // Include it here too if needed
     ]).then(() => {
       debuglog('preparePage DONE')
       return page
