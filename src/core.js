@@ -37,7 +37,7 @@ function loadPage (
 ) {
   debuglog('page load start')
   let waitingForPageLoad = true
-  let loadPagePromise = page.goto(url, pageGotoOptions)
+  let loadPagePromise = page.goto(url, { ...pageGotoOptions, timeout: 0 })
   if (pageLoadSkipTimeout) {
     loadPagePromise = Promise.race([
       loadPagePromise,
