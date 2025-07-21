@@ -361,11 +361,17 @@ async function pruneNonCriticalCssLauncher ({
 
       return resolve(returnValue)
     }
-    killTimeout = setTimeout(() => {
-      cleanupAndExit({
-        error: new Error('Penthouse timed out after ' + timeout / 1000 + 's. ')
-      })
-    }, timeout)
+
+    // Only set timeout if timeout > 0
+    if (timeout > 0) {
+      killTimeout = setTimeout(() => {
+        cleanupAndExit({
+          error: new Error(
+            'Penthouse timed out after ' + timeout / 1000 + 's. '
+          )
+        })
+      }, timeout)
+    }
 
     // ensure there is no uncaughtException
     try {
