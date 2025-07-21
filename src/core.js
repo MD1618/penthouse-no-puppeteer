@@ -199,19 +199,6 @@ async function preparePage ({
     }
   }
 
-  // assumes the page was already configured from previous call!
-  if (reusedPage) {
-    return Promise.all([
-      setViewportPromise,
-      setUserAgentPromise,
-      setCustomPageHeadersPromise,
-      setCookiesPromise
-    ]).then(() => {
-      debuglog('preparePage DONE')
-      return page
-    })
-  }
-
   // disable Puppeteer navigation timeouts;
   // Penthouse tracks these internally instead.
   page.setDefaultNavigationTimeout(0)
@@ -244,7 +231,21 @@ async function preparePage ({
       debuglog(text.replace(/^debug: /, ''))
     }
   })
+
   debuglog('page event listeners set')
+
+  // assumes the page was already configured from previous call!
+  if (reusedPage) {
+    return Promise.all([
+      setViewportPromise,
+      setUserAgentPromise,
+      setCustomPageHeadersPromise,
+      setCookiesPromise
+    ]).then(() => {
+      debuglog('preparePage DONE')
+      return page
+    })
+  }
 
   return Promise.all([
     setViewportPromise,
