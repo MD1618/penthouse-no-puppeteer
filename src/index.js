@@ -179,6 +179,7 @@ const generateCriticalCssWrapped = async function generateCriticalCssWrapped (
 }
 
 module.exports = async function (options, callback) {
+  console.log('🏠 Penthouse fork (penthouse-no-puppeteer) is being used!')
   process.on('exit', exitHandler)
   process.on('SIGTERM', exitHandler)
   process.on('SIGINT', exitHandler)
